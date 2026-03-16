@@ -1,5 +1,16 @@
 # @0xsequence/dapp-client
 
+## 3.0.2
+
+### Patch Changes
+
+- allow native self transfer
+- Updated dependencies
+  - @0xsequence/guard@3.0.2
+  - @0xsequence/relayer@3.0.2
+  - @0xsequence/wallet-core@3.0.2
+  - @0xsequence/wallet-primitives@3.0.2
+
 ## 3.0.1
 
 ### Patch Changes

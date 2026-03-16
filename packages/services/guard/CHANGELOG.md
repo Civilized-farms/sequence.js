@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 3.0.2
+
+### Patch Changes
+
+- allow native self transfer
+
 ## 3.0.1
 
 ### Patch Changes
