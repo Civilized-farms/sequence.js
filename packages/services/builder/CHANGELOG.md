@@ -1,5 +1,11 @@
 # @0xsequence/builder
 
+## 3.0.4
+
+### Patch Changes
+
+- id-token login support
+
 ## 3.0.3
 
 ### Patch Changes
