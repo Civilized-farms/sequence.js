@@ -1,5 +1,16 @@
 # @0xsequence/dapp-client
 
+## 3.0.3
+
+### Patch Changes
+
+- 3.0.3
+- Updated dependencies
+  - @0xsequence/guard@3.0.3
+  - @0xsequence/relayer@3.0.3
+  - @0xsequence/wallet-core@3.0.3
+  - @0xsequence/wallet-primitives@3.0.3
+
 ## 3.0.2
 
 ### Patch Changes

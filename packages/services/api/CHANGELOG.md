@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 3.0.3
+
+### Patch Changes
+
+- 3.0.3
+
 ## 3.0.2
 
 ### Patch Changes

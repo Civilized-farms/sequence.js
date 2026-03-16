@@ -1,5 +1,13 @@
 # @0xsequence/relayer
 
+## 3.0.3
+
+### Patch Changes
+
+- 3.0.3
+- Updated dependencies
+  - @0xsequence/wallet-primitives@3.0.3
+
 ## 3.0.2
 
 ### Patch Changes
