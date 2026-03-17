@@ -9,6 +9,8 @@ on:
 jobs:
   master:
     if: "! startsWith(github.event.head_commit.message, '[CI Skip]')"
+    permissions:
+      contents: read
     runs-on: ubuntu-22.04
     name: Build and Deploy
     steps:
