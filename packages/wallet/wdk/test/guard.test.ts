@@ -2,10 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Manager } from '../src/sequence'
 import { GuardHandler } from '../src/sequence/handlers/guard'
 import { Address, Bytes, Hex, TypedData } from 'ox'
+<<<<<<< HEAD
 import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { Kinds } from '../src/sequence/types/signer'
 import { newManager } from './constants'
 import { GuardRole, Guards } from '../src/sequence/guards'
+=======
+import { Config, Constants, Network, Payload } from '@0xsequence/wallet-primitives'
+import { Kinds } from '../src/sequence/types/signer.js'
+import { newManager } from './constants.js'
+import { Guards } from '../src/sequence/guards.js'
+>>>>>>> upstream/master
 
 // Mock fetch globally for guard API calls
 const mockFetch = vi.fn()
@@ -16,8 +23,8 @@ describe('GuardHandler', () => {
   let guards: Guards
   let testWallet: Address.Address
   let testPayload: Payload.Payload
-  let testMessageDigest: Bytes.Bytes
-  let testMessage: Hex.Hex
+  let _testMessageDigest: Bytes.Bytes
+  let _testMessage: Hex.Hex
 
   beforeEach(async () => {
     vi.clearAllMocks()
@@ -28,8 +35,8 @@ describe('GuardHandler', () => {
 
     testWallet = '0x1234567890123456789012345678901234567890' as Address.Address
     testPayload = Payload.fromMessage(Hex.fromString('Test message'))
-    testMessage = TypedData.encode(Payload.toTyped(testWallet, Network.ChainId.ARBITRUM, testPayload))
-    testMessageDigest = Payload.hash(testWallet, Network.ChainId.ARBITRUM, testPayload)
+    _testMessage = TypedData.encode(Payload.toTyped(testWallet, Network.ChainId.ARBITRUM, testPayload))
+    _testMessageDigest = Payload.hash(testWallet, Network.ChainId.ARBITRUM, testPayload)
   })
 
   afterEach(async () => {

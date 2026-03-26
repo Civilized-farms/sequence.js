@@ -6,6 +6,7 @@ import { Signers as CoreSigners, State, Relayer } from '@0xsequence/wallet-core'
 import * as Db from '../src/dbs'
 import { Network } from '@0xsequence/wallet-primitives'
 
+// eslint-disable-next-line turbo/no-undeclared-env-vars
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
 dotenvConfig({ path: envFile })
 
@@ -13,8 +14,12 @@ export const EMITTER_ADDRESS: Address.Address = '0xb7bE532959236170064cf099e1a33
 export const EMITTER_ABI = Abi.from(['function explicitEmit()', 'function implicitEmit()'])
 
 // Environment variables
+<<<<<<< HEAD
 export const { RPC_URL, PRIVATE_KEY } = process.env
 export const CAN_RUN_LIVE = !!RPC_URL && !!PRIVATE_KEY
+=======
+// eslint-disable-next-line turbo/no-undeclared-env-vars
+>>>>>>> upstream/master
 export const LOCAL_RPC_URL = process.env.LOCAL_RPC_URL || 'http://localhost:8545'
 
 let testIdCounter = 0
@@ -82,8 +87,13 @@ export function newRemoteManager(
     ? `_${remoteManagerOptions.tag}_testrun_${testIdCounter}`
     : `_testrun_${testIdCounter}`
 
+<<<<<<< HEAD
   let relayers: Relayer.Relayer[] = []
   let bundlers: Relayer.Bundler[] = []
+=======
+  const relayers: Relayer.Relayer[] = []
+  const bundlers: Bundler.Bundler[] = []
+>>>>>>> upstream/master
 
   if (remoteManagerOptions.network.relayerPk) {
     const provider = Provider.from(RpcTransport.fromHttp(remoteManagerOptions.network.rpcUrl))

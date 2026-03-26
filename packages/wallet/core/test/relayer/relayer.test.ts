@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { Address, Hex } from 'ox'
+<<<<<<< HEAD:packages/wallet/core/test/relayer/relayer.test.ts
 import { Network, Payload, Precondition } from '@0xsequence/wallet-primitives'
 import {
   Relayer,
@@ -15,6 +16,10 @@ import {
   OperationFailedStatus,
 } from '../../src/relayer/relayer.js'
 import { FeeTokenType } from '../../src/relayer/standard/rpc/index.js'
+=======
+import { Network, Payload } from '@0xsequence/wallet-primitives'
+import { Relayer, RpcRelayerGen } from '@0xsequence/relayer'
+>>>>>>> upstream/master:packages/services/relayer/test/relayer/relayer.test.ts
 
 // Test addresses and data
 const TEST_WALLET_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
@@ -139,7 +144,11 @@ describe('Relayer', () => {
           symbol: 'ETH',
           decimals: 18,
           logoURL: 'https://example.com/eth.png',
+<<<<<<< HEAD:packages/wallet/core/test/relayer/relayer.test.ts
           type: 'NATIVE' as FeeTokenType,
+=======
+          type: 'NATIVE' as RpcRelayerGen.FeeTokenType,
+>>>>>>> upstream/master:packages/services/relayer/test/relayer/relayer.test.ts
           contractAddress: undefined,
         },
         to: TEST_TO_ADDRESS,
@@ -330,7 +339,7 @@ describe('Relayer', () => {
       const statusResult = await mockRelayer.status(TEST_OP_HASH, TEST_CHAIN_ID)
       expect(statusResult.status).toBe('confirmed')
 
-      const preconditionResult = await mockRelayer.checkPrecondition({} as any)
+      const preconditionResult = await mockRelayer.checkPrecondition({} as { type: string })
       expect(preconditionResult).toBe(true)
     })
   })

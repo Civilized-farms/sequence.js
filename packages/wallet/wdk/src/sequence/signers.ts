@@ -8,7 +8,20 @@ export function isWitnessExtraSignerKind(extra: any): extra is WitnessExtraSigne
 }
 
 function toKnownKind(kind: string): Kind {
+<<<<<<< HEAD
   if (Object.values(Kinds).includes(kind as Kind)) {
+=======
+  if (kind.startsWith('custom-')) {
+    return kind as Kind
+  }
+
+  if (kind === 'login-google-pkce') {
+    // Normalize legacy Google PKCE witnesses while the canonical signer kind is `login-google`.
+    return Kinds.LoginGoogle
+  }
+
+  if (Object.values(Kinds).includes(kind as (typeof Kinds)[keyof typeof Kinds])) {
+>>>>>>> upstream/master
     return kind as Kind
   }
 
@@ -64,7 +77,9 @@ export class Signers {
       if (isWitnessExtraSignerKind(message)) {
         return toKnownKind(message.signerKind)
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
 
     return undefined
   }

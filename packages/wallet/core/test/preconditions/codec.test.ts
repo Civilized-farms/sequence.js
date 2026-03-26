@@ -34,8 +34,8 @@ describe('Preconditions Codec', () => {
 
   describe('decodePrecondition', () => {
     it('should return undefined for null/undefined input', () => {
-      expect(decodePrecondition(null as any)).toBeUndefined()
-      expect(decodePrecondition(undefined as any)).toBeUndefined()
+      expect(decodePrecondition(null as unknown as TransactionPrecondition)).toBeUndefined()
+      expect(decodePrecondition(undefined as unknown as TransactionPrecondition)).toBeUndefined()
     })
 
     it('should decode native balance precondition with min and max', () => {
@@ -277,9 +277,16 @@ describe('Preconditions Codec', () => {
     it('should handle malformed addresses gracefully', () => {
       const intent: IntentPrecondition = {
         type: 'native-balance',
+<<<<<<< HEAD:packages/wallet/core/test/preconditions/codec.test.ts
         data: JSON.stringify({
           address: 'invalid-address',
         }),
+=======
+        ownerAddress: 'invalid-address',
+        tokenAddress: NATIVE_TOKEN_ADDRESS.toString(),
+        chainId: ARBITRUM_CHAIN_ID,
+        minAmount: BigInt('1000000000000000000'),
+>>>>>>> upstream/master:packages/services/relayer/test/preconditions/codec.test.ts
       }
 
       const result = decodePrecondition(intent)
@@ -288,6 +295,7 @@ describe('Preconditions Codec', () => {
     })
 
     it('should handle malformed BigInt values gracefully', () => {
+<<<<<<< HEAD:packages/wallet/core/test/preconditions/codec.test.ts
       const intent: IntentPrecondition = {
         type: 'native-balance',
         data: JSON.stringify({
@@ -295,6 +303,15 @@ describe('Preconditions Codec', () => {
           min: 'not-a-number',
         }),
       }
+=======
+      const intent = {
+        type: 'native-balance',
+        ownerAddress: TEST_ADDRESS.toString(),
+        tokenAddress: NATIVE_TOKEN_ADDRESS.toString(),
+        chainId: ARBITRUM_CHAIN_ID,
+        minAmount: 'not-a-number',
+      } as unknown as TransactionPrecondition
+>>>>>>> upstream/master:packages/services/relayer/test/preconditions/codec.test.ts
 
       const result = decodePrecondition(intent)
       expect(result).toBeUndefined()
@@ -358,7 +375,14 @@ describe('Preconditions Codec', () => {
         },
         {
           type: 'native-balance',
+<<<<<<< HEAD:packages/wallet/core/test/preconditions/codec.test.ts
           data: 'invalid json',
+=======
+          ownerAddress: 'invalid-address',
+          tokenAddress: NATIVE_TOKEN_ADDRESS.toString(),
+          chainId: ARBITRUM_CHAIN_ID,
+          minAmount: BigInt('1000000000000000000'),
+>>>>>>> upstream/master:packages/services/relayer/test/preconditions/codec.test.ts
         },
       ]
 

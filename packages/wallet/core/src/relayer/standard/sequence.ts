@@ -4,7 +4,7 @@ import { AbiFunction, Address, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 
 export class SequenceRelayer implements Relayer {
-  public readonly kind: 'relayer' = 'relayer'
+  public readonly kind = 'relayer'
   public readonly type = 'sequence'
   readonly id = 'sequence'
 
@@ -37,7 +37,11 @@ export class SequenceRelayer implements Relayer {
     }
   }
 
+<<<<<<< HEAD:packages/wallet/core/src/relayer/standard/sequence.ts
   async checkPrecondition(precondition: IntentPrecondition): Promise<boolean> {
+=======
+  async checkPrecondition(_precondition: TransactionPrecondition): Promise<boolean> {
+>>>>>>> upstream/master:packages/services/relayer/src/relayer/standard/sequence.ts
     // TODO: implement
     return false
   }

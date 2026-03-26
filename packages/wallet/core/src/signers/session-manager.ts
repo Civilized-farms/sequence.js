@@ -17,6 +17,11 @@ import {
   isExplicitSessionSigner,
   SessionSigner,
   SessionSignerInvalidReason,
+<<<<<<< HEAD
+=======
+  isImplicitSessionSigner,
+  isIncrementCall,
+>>>>>>> upstream/master
   UsageLimit,
 } from './session/index.js'
 
@@ -129,6 +134,7 @@ export class SessionManager implements SapientSigner {
     }))
   }
 
+<<<<<<< HEAD
   async findSignersForCalls(wallet: Address.Address, chainId: number, calls: Payload.Call[]): Promise<SessionSigner[]> {
     // Only use signers that match the topology
     const topology = await this.topology
@@ -146,6 +152,18 @@ export class SessionManager implements SapientSigner {
     }
 
     // Find supported signers for each call
+=======
+  /**
+   * Find one signer per call from the given candidate list (first that supports each call).
+   */
+  private async findSignersForCallsWithCandidates(
+    wallet: Address.Address,
+    chainId: number,
+    calls: Payload.Call[],
+    topology: SessionConfig.SessionsTopology,
+    availableSigners: SessionSigner[],
+  ): Promise<SessionSigner[]> {
+>>>>>>> upstream/master
     const signers: SessionSigner[] = []
     for (const call of calls) {
       let supported = false
@@ -162,7 +180,74 @@ export class SessionManager implements SapientSigner {
         }
       }
       if (!supported) {
+<<<<<<< HEAD
         throw new Error('No signer supported for call')
+=======
+        if (expiredSupportedSigner) {
+          throw new Error(`Signer supporting call is expired: ${expiredSupportedSigner.address}`)
+        }
+        throw new Error(`No signer supported for call. Call: to=${call.to}, data=${call.data}, value=${call.value}, `)
+      }
+    }
+    return signers
+  }
+
+  async findSignersForCalls(wallet: Address.Address, chainId: number, calls: Payload.Call[]): Promise<SessionSigner[]> {
+    const topology = await this.topology
+    const identitySigners = SessionConfig.getIdentitySigners(topology)
+    if (identitySigners.length === 0) {
+      throw new Error('Identity signers not found')
+    }
+
+    const availableSigners = [...this._implicitSigners, ...this._explicitSigners]
+    if (availableSigners.length === 0) {
+      throw new Error('No signers match the topology')
+    }
+
+    const nonIncrementCalls: Payload.Call[] = []
+    const incrementCalls: Payload.Call[] = []
+    for (const call of calls) {
+      if (isIncrementCall(call, this.address)) {
+        incrementCalls.push(call)
+      } else {
+        nonIncrementCalls.push(call)
+      }
+    }
+
+    // Find signers for non-increment calls
+    const nonIncrementSigners =
+      nonIncrementCalls.length > 0
+        ? await this.findSignersForCallsWithCandidates(wallet, chainId, nonIncrementCalls, topology, availableSigners)
+        : []
+
+    let incrementSigners: SessionSigner[] = []
+    if (incrementCalls.length > 0) {
+      // Find signers for increment calls, preferring signers that signed non-increment calls
+      const incrementCandidates = [
+        ...nonIncrementSigners,
+        ...availableSigners.filter((s) => !nonIncrementSigners.includes(s)),
+      ]
+      incrementSigners = await this.findSignersForCallsWithCandidates(
+        wallet,
+        chainId,
+        incrementCalls,
+        topology,
+        incrementCandidates,
+      )
+    }
+
+    // Merge back in original call order
+    const signers: SessionSigner[] = []
+    let nonIncrementIndex = 0
+    let incrementIndex = 0
+    for (const call of calls) {
+      if (isIncrementCall(call, this.address)) {
+        signers.push(incrementSigners[incrementIndex]!)
+        incrementIndex++
+      } else {
+        signers.push(nonIncrementSigners[nonIncrementIndex]!)
+        nonIncrementIndex++
+>>>>>>> upstream/master
       }
     }
     return signers
@@ -178,20 +263,23 @@ export class SessionManager implements SapientSigner {
     }
     const signers = await this.findSignersForCalls(wallet, chainId, calls)
 
-    // Create a map of signers to their associated calls
-    const signerToCalls = new Map<SessionSigner, Payload.Call[]>()
+    // Map each signer to only their non-increment calls
+    const signerToNonIncrementCalls = new Map<SessionSigner, Payload.Call[]>()
     signers.forEach((signer, index) => {
       const call = calls[index]!
-      const existingCalls = signerToCalls.get(signer) || []
-      signerToCalls.set(signer, [...existingCalls, call])
+      if (isIncrementCall(call, this.address)) {
+        return
+      }
+      const existing = signerToNonIncrementCalls.get(signer) || []
+      signerToNonIncrementCalls.set(signer, [...existing, call])
     })
 
-    // Prepare increments for each explicit signer with their associated calls
+    // Prepare increments for each explicit signer from their non-increment calls only
     const increments: UsageLimit[] = (
       await Promise.all(
-        Array.from(signerToCalls.entries()).map(async ([signer, associatedCalls]) => {
+        Array.from(signerToNonIncrementCalls.entries()).map(async ([signer, nonIncrementCalls]) => {
           if (isExplicitSessionSigner(signer)) {
-            return signer.prepareIncrements(wallet, chainId, associatedCalls, this.address, this._provider!)
+            return signer.prepareIncrements(wallet, chainId, nonIncrementCalls, this.address, this._provider!)
           }
           return []
         }),

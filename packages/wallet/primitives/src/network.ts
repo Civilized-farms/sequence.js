@@ -127,6 +127,7 @@ export const ChainId = {
   SOMNIA: 5031,
 
   // INCENTIV
+  INCENTIV: 24101,
   INCENTIV_TESTNET_V2: 28802,
 
   // KATANA
@@ -399,7 +400,7 @@ export const ALL: Network[] = [
     chainId: ChainId.BASE,
     type: NetworkType.MAINNET,
     name: 'base',
-    title: 'Base (Coinbase)',
+    title: 'Base',
     rpcUrl: getRpcUrl('base'),
     logoUrl: getLogoUrl(ChainId.BASE),
     blockExplorer: {
@@ -943,6 +944,27 @@ export const ALL: Network[] = [
   },
 
   {
+    chainId: ChainId.INCENTIV,
+    type: NetworkType.MAINNET,
+    name: 'incentiv',
+    title: 'Incentiv',
+    rpcUrl: getRpcUrl('incentiv'),
+    logoUrl: getLogoUrl(ChainId.INCENTIV),
+    blockExplorer: {
+      name: 'Incentiv Explorer',
+      url: 'https://explorer.incentiv.io/',
+    },
+    nativeCurrency: {
+      symbol: 'CENT',
+      name: 'CENT',
+      decimals: 18,
+    },
+    contracts: {
+      multicall3: DEFAULT_MULTICALL3_ADDRESS,
+    },
+  },
+
+  {
     chainId: ChainId.INCENTIV_TESTNET_V2,
     type: NetworkType.TESTNET,
     name: 'incentiv-testnet-v2',
@@ -995,6 +1017,84 @@ export const ALL: Network[] = [
       decimals: 18,
     },
   },
+<<<<<<< HEAD
+=======
+
+  {
+    chainId: ChainId.ARC_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'arc-testnet',
+    title: 'Arc Testnet',
+    rpcUrl: getRpcUrl('arc-testnet'),
+    logoUrl: getLogoUrl(ChainId.ARC_TESTNET),
+    blockExplorer: {
+      name: 'Arc Testnet Explorer',
+      url: 'https://1jr2dw1zdqvyes8u.blockscout.com/',
+    },
+    nativeCurrency: {
+      symbol: 'USDC',
+      name: 'USDC',
+      decimals: 6,
+    },
+    contracts: {
+      multicall3: DEFAULT_MULTICALL3_ADDRESS,
+    },
+  },
+
+  {
+    chainId: ChainId.HYPEREVM,
+    type: NetworkType.MAINNET,
+    name: 'hyperevm',
+    title: 'HyperEVM',
+    rpcUrl: getRpcUrl('hyperevm'),
+    logoUrl: getLogoUrl(ChainId.HYPEREVM),
+    blockExplorer: {
+      name: 'HyperEVM Explorer',
+      url: 'https://www.hyperscan.com/',
+    },
+    nativeCurrency: {
+      symbol: 'HYPE',
+      name: 'HYPE',
+      decimals: 18,
+    },
+  },
+
+  {
+    chainId: ChainId.BERACHAIN,
+    type: NetworkType.MAINNET,
+    name: 'berachain',
+    title: 'Berachain',
+    rpcUrl: getRpcUrl('berachain'),
+    logoUrl: getLogoUrl(ChainId.BERACHAIN),
+    blockExplorer: {
+      name: 'Berachain Explorer',
+      url: 'https://berascan.com/',
+    },
+    nativeCurrency: {
+      symbol: 'BEAR',
+      name: 'BEAR',
+      decimals: 18,
+    },
+  },
+
+  {
+    chainId: ChainId.SONIC,
+    type: NetworkType.MAINNET,
+    name: 'sonic',
+    title: 'Sonic',
+    rpcUrl: getRpcUrl('sonic'),
+    logoUrl: getLogoUrl(ChainId.SONIC),
+    blockExplorer: {
+      name: 'Sonic Explorer',
+      url: 'https://sonicscan.com/',
+    },
+    nativeCurrency: {
+      symbol: 'S',
+      name: 'Sonic',
+      decimals: 18,
+    },
+  },
+>>>>>>> upstream/master
 ]
 
 function getRpcUrl(networkName: string): string {

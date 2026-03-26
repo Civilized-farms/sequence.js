@@ -365,8 +365,14 @@ describe('Sessions (via Manager)', () => {
         throw new Error('Failed to create pk store')
       }
       // Create the initial permissions
+<<<<<<< HEAD
       let permission: Permission.SessionPermissions = {
         signer: e.address,
+=======
+      const explicitSession: ExplicitSession = {
+        type: 'explicit',
+        sessionAddress: e.address,
+>>>>>>> upstream/master
         chainId,
         valueLimit: 0n,
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now

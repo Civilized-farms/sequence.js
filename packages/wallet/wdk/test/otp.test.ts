@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Address, Hex } from 'ox'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
+<<<<<<< HEAD
 import { IdentityInstrument, IdentityType, KeyType, OtpChallenge } from '@0xsequence/identity-instrument'
 import { OtpHandler } from '../src/sequence/handlers/otp'
 import { Signatures } from '../src/sequence/signatures'
@@ -8,6 +9,15 @@ import * as Db from '../src/dbs'
 import { IdentitySigner } from '../src/identity/signer'
 import { BaseSignatureRequest } from '../src/sequence/types/signature-request'
 import { Kinds } from '../src/sequence/types/signer'
+=======
+import { IdentityInstrument, IdentityType, KeyType } from '@0xsequence/identity-instrument'
+import { OtpHandler, PromptOtpHandler } from '../src/sequence/handlers/otp.js'
+import { Signatures } from '../src/sequence/signatures.js'
+import * as Db from '../src/dbs/index.js'
+import { IdentitySigner } from '../src/identity/signer.js'
+import { BaseSignatureRequest } from '../src/sequence/types/signature-request.js'
+import { Kinds } from '../src/sequence/types/signer.js'
+>>>>>>> upstream/master
 
 // Mock the global crypto API
 const mockCryptoSubtle = {
