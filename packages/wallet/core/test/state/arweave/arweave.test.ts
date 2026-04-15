@@ -1,9 +1,30 @@
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { Address } from 'ox'
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { Arweave, Reader, Sequence } from '../../../src/state/index'
 
 const TEST_TIMEOUT_MS = 20_000
+const RECORDING_FILE = new URL('./recording', import.meta.url)
+
+type RecordedRequest = {
+  method: string
+  url: string
+  headers: Record<string, string>
+  body: string
+}
+
+type RecordedResponse = {
+  status: number
+  statusText: string
+  headers: Record<string, string>
+  body: string
+}
+
+type RecordingEntry = {
+  request: RecordedRequest
+  response: RecordedResponse
+}
 
 const tests: { [method in keyof Reader]: { [description: string]: Parameters<Reader[method]> } } = {
   getConfiguration: {
@@ -94,9 +115,98 @@ function normalize(value: any): any {
   return value
 }
 
+function normalizeHeaders(headers: Headers): Record<string, string> {
+  return Object.fromEntries([...headers.entries()].sort(([left], [right]) => left.localeCompare(right)))
+}
+
+async function serializeRequest(input: RequestInfo | URL, init?: RequestInit): Promise<RecordedRequest> {
+  const request = new Request(input, init)
+
+  return {
+    method: request.method.toUpperCase(),
+    url: request.url,
+    headers: normalizeHeaders(request.headers),
+    body: request.method === 'GET' || request.method === 'HEAD' ? '' : await request.clone().text(),
+  }
+}
+
+function serializeResponse(response: Response, body: string): RecordedResponse {
+  return {
+    status: response.status,
+    statusText: response.statusText,
+    headers: normalizeHeaders(response.headers),
+    body,
+  }
+}
+
+function requestKey(request: RecordedRequest): string {
+  return JSON.stringify(request)
+}
+
 describe('Arweave state reader', () => {
-  const arweave = new Arweave.Reader()
-  const sequence = new Sequence.Provider()
+  let arweave: Arweave.Reader
+  let sequence: Sequence.Provider
+  let originalFetch: typeof globalThis.fetch | undefined
+
+  beforeAll(() => {
+    originalFetch = globalThis.fetch
+    if (!originalFetch) {
+      throw new Error('fetch is not available')
+    }
+
+    if (existsSync(RECORDING_FILE)) {
+      const entries = JSON.parse(readFileSync(RECORDING_FILE, 'utf8')) as RecordingEntry[]
+      const responsesByRequest = new Map<string, RecordedResponse[]>()
+
+      for (const entry of entries) {
+        const key = requestKey(entry.request)
+        const responses = responsesByRequest.get(key)
+
+        if (responses) {
+          responses.push(entry.response)
+        } else {
+          responsesByRequest.set(key, [entry.response])
+        }
+      }
+
+      globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const request = await serializeRequest(input, init)
+        const response = responsesByRequest.get(requestKey(request))?.shift()
+
+        if (!response) {
+          throw new Error(`no recorded response for request ${JSON.stringify(request, null, 2)}`)
+        }
+
+        return new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        })
+      }) as typeof fetch
+    } else {
+      const entries: RecordingEntry[] = []
+
+      globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const request = await serializeRequest(input, init)
+        const response = await originalFetch!(input, init)
+        const body = await response.clone().text()
+
+        entries.push({ request, response: serializeResponse(response, body) })
+        writeFileSync(RECORDING_FILE, JSON.stringify(entries, null, 2))
+
+        return response
+      }) as typeof fetch
+    }
+
+    arweave = new Arweave.Reader()
+    sequence = new Sequence.Provider()
+  })
+
+  afterAll(() => {
+    if (originalFetch) {
+      globalThis.fetch = originalFetch
+    }
+  })
 
   const methods = Object.entries(tests).filter(([, methodTests]) => Object.keys(methodTests).length > 0)
   if (methods.length === 0) {
