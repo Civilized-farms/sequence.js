@@ -500,10 +500,7 @@ function pruneChoiceSet(choiceSet: TopologyChoiceSet): TopologyChoiceSet {
 function buildTopologyChoiceSet(topology: Config.Topology, cap: bigint): TopologyChoiceSet {
   if (Signature.isSignedSignerLeaf(topology)) {
     const choices: TopologyChoiceSet = { slotCount: 1, choices: new Map() }
-    addChoice(
-      choices,
-      makeChoice({ type: 'signer', address: topology.address, weight: topology.weight }, 0n, 0, '0'),
-    )
+    addChoice(choices, makeChoice({ type: 'signer', address: topology.address, weight: topology.weight }, 0n, 0, '0'))
 
     if (topology.weight > 0n) {
       addChoice(choices, makeChoice(topology, clampWeight(topology.weight, cap), 1, '1'))
@@ -547,7 +544,10 @@ function buildTopologyChoiceSet(topology: Config.Topology, cap: bigint): Topolog
   if (Config.isNestedLeaf(topology)) {
     const treeChoices = buildTopologyChoiceSet(topology.tree, topology.threshold)
     const choices: TopologyChoiceSet = { slotCount: treeChoices.slotCount, choices: new Map() }
-    addChoice(choices, makeChoice(Hex.fromBytes(Config.hashConfiguration(topology)), 0n, 0, zeroMask(treeChoices.slotCount)))
+    addChoice(
+      choices,
+      makeChoice(Hex.fromBytes(Config.hashConfiguration(topology)), 0n, 0, zeroMask(treeChoices.slotCount)),
+    )
 
     const satisfied = treeChoices.choices.get(topology.threshold.toString())
     if (satisfied && topology.weight > 0n) {
