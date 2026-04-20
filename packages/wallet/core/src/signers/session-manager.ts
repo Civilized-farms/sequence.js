@@ -17,8 +17,11 @@ import {
   isExplicitSessionSigner,
   SessionSigner,
   SessionSignerInvalidReason,
+<<<<<<< HEAD
+=======
   isImplicitSessionSigner,
   isIncrementCall,
+>>>>>>> upstream/master
   UsageLimit,
 } from './session/index.js'
 
@@ -131,6 +134,25 @@ export class SessionManager implements SapientSigner {
     }))
   }
 
+<<<<<<< HEAD
+  async findSignersForCalls(wallet: Address.Address, chainId: number, calls: Payload.Call[]): Promise<SessionSigner[]> {
+    // Only use signers that match the topology
+    const topology = await this.topology
+    const identitySigner = SessionConfig.getIdentitySigner(topology)
+    if (!identitySigner) {
+      throw new Error('Identity signer not found')
+    }
+    const validImplicitSigners = this._implicitSigners.filter((signer) => signer.isValid(topology, chainId).isValid)
+    const validExplicitSigners = this._explicitSigners.filter((signer) => signer.isValid(topology, chainId).isValid)
+
+    // Prioritize implicit signers
+    const availableSigners = [...validImplicitSigners, ...validExplicitSigners]
+    if (availableSigners.length === 0) {
+      throw new Error('No signers match the topology')
+    }
+
+    // Find supported signers for each call
+=======
   /**
    * Find one signer per call from the given candidate list (first that supports each call).
    */
@@ -141,21 +163,13 @@ export class SessionManager implements SapientSigner {
     topology: SessionConfig.SessionsTopology,
     availableSigners: SessionSigner[],
   ): Promise<SessionSigner[]> {
+>>>>>>> upstream/master
     const signers: SessionSigner[] = []
     for (const call of calls) {
       let supported = false
-      let expiredSupportedSigner: SessionSigner | undefined
       for (const signer of availableSigners) {
         try {
           supported = await signer.supportedCall(wallet, chainId, call, this.address, this._provider)
-          if (supported) {
-            // Check signer validity
-            const signerValidity = signer.isValid(topology, chainId)
-            if (signerValidity.invalidReason === 'Expired') {
-              expiredSupportedSigner = signer
-            }
-            supported = signerValidity.isValid
-          }
         } catch (error) {
           console.error('findSignersForCalls error', error)
           continue
@@ -166,6 +180,9 @@ export class SessionManager implements SapientSigner {
         }
       }
       if (!supported) {
+<<<<<<< HEAD
+        throw new Error('No signer supported for call')
+=======
         if (expiredSupportedSigner) {
           throw new Error(`Signer supporting call is expired: ${expiredSupportedSigner.address}`)
         }
@@ -230,6 +247,7 @@ export class SessionManager implements SapientSigner {
       } else {
         signers.push(nonIncrementSigners[nonIncrementIndex]!)
         nonIncrementIndex++
+>>>>>>> upstream/master
       }
     }
     return signers
@@ -325,7 +343,6 @@ export class SessionManager implements SapientSigner {
 
     const signers = await this.findSignersForCalls(wallet, chainId, payload.calls)
     if (signers.length !== payload.calls.length) {
-      // Unreachable. Throw in findSignersForCalls
       throw new Error('No signer supported for call')
     }
     const signatures = await Promise.all(
@@ -362,10 +379,9 @@ export class SessionManager implements SapientSigner {
       }
     }
 
-    // Prepare encoding params
+    // Encode the signature
     const explicitSigners: Address.Address[] = []
     const implicitSigners: Address.Address[] = []
-    let identitySigner: Address.Address | undefined
     await Promise.all(
       signers.map(async (signer) => {
         const address = await signer.address
@@ -373,32 +389,17 @@ export class SessionManager implements SapientSigner {
           if (!explicitSigners.find((a) => Address.isEqual(a, address))) {
             explicitSigners.push(address)
           }
-        } else if (isImplicitSessionSigner(signer)) {
+        } else {
           if (!implicitSigners.find((a) => Address.isEqual(a, address))) {
             implicitSigners.push(address)
-            if (!identitySigner) {
-              identitySigner = signer.identitySigner
-            } else if (!Address.isEqual(identitySigner, signer.identitySigner)) {
-              throw new Error('Multiple implicit signers with different identity signers')
-            }
           }
         }
       }),
     )
-    if (!identitySigner) {
-      // Explicit signers only. Use any identity signer
-      const identitySigners = SessionConfig.getIdentitySigners(await this.topology)
-      if (identitySigners.length === 0) {
-        throw new Error('No identity signers found')
-      }
-      identitySigner = identitySigners[0]!
-    }
 
-    // Perform encoding
-    const encodedSignature = SessionSignature.encodeSessionSignature(
+    const encodedSignature = SessionSignature.encodeSessionCallSignatures(
       signatures,
       await this.topology,
-      identitySigner,
       explicitSigners,
       implicitSigners,
     )

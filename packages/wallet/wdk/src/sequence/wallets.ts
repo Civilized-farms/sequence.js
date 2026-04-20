@@ -52,7 +52,7 @@ function getIdTokenSignupHandler(
 }
 
 export type StartSignUpWithRedirectArgs = {
-  kind: 'google-pkce' | 'apple' | `custom-${string}`
+  kind: 'google-pkce' | 'apple'
   target: string
   metadata: { [key: string]: string }
 }
@@ -104,7 +104,7 @@ export type CompleteRedirectArgs = CommonSignupArgs & {
 }
 
 export type AuthCodeSignupArgs = CommonSignupArgs & {
-  kind: 'google-pkce' | 'apple' | `custom-${string}`
+  kind: 'google-pkce' | 'apple'
   commitment: AuthCommitment
   code: string
   target: string
@@ -580,7 +580,7 @@ function toConfig(
   loginTopology: Config.Topology,
   devicesTopology: Config.Topology,
   modules: Module[],
-  guardTopology?: Config.Topology,
+  guardTopology?: Config.NestedLeaf,
 ): Config.Config {
   if (!guardTopology) {
     return {
@@ -613,7 +613,7 @@ function toModulesTopology(modules: Module[]): Config.Topology {
       return {
         type: 'nested',
         weight: module.weight,
-        threshold: module.sapientLeaf.weight + Config.getWeight(module.guardLeaf, () => true).maxWeight,
+        threshold: module.sapientLeaf.weight + module.guardLeaf.weight,
         tree: [module.sapientLeaf, module.guardLeaf],
       } as Config.NestedLeaf
     } else {
@@ -637,7 +637,8 @@ function fromModulesTopology(topology: Config.Topology): Module[] {
   } else if (
     Config.isNestedLeaf(topology) &&
     Config.isNode(topology.tree) &&
-    Config.isSapientSignerLeaf(topology.tree[0])
+    Config.isSapientSignerLeaf(topology.tree[0]) &&
+    Config.isNestedLeaf(topology.tree[1])
   ) {
     modules.push({
       sapientLeaf: topology.tree[0],
@@ -658,7 +659,7 @@ function fromConfig(config: Config.Config): {
   loginTopology: Config.Topology
   devicesTopology: Config.Topology
   modules: Module[]
-  guardTopology?: Config.Topology
+  guardTopology?: Config.NestedLeaf
 } {
   if (config.threshold === 1n) {
     if (Config.isNode(config.topology) && Config.isNode(config.topology[0])) {
@@ -675,7 +676,7 @@ function fromConfig(config: Config.Config): {
       Config.isNode(config.topology) &&
       Config.isNode(config.topology[0]) &&
       Config.isNode(config.topology[0][0]) &&
-      Config.isTopology(config.topology[0][1])
+      Config.isNestedLeaf(config.topology[0][1])
     ) {
       return {
         loginTopology: config.topology[0][0][0],
@@ -859,6 +860,12 @@ export class Wallets implements WalletsInterface {
         }
       }
     }
+<<<<<<< HEAD
+  }
+
+  async startSignUpWithRedirect(args: StartSignUpWithRedirectArgs) {
+    const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodeHandler
+=======
 
     if (args.kind.startsWith('custom-')) {
       if (isIdTokenArgs(args)) {
@@ -894,6 +901,7 @@ export class Wallets implements WalletsInterface {
   async startSignUpWithRedirect(args: StartSignUpWithRedirectArgs) {
     const kind = getSignupHandlerKey(args.kind)
     const handler = this.shared.handlers.get(kind)
+>>>>>>> upstream/master
     if (!handler) {
       throw new Error('handler-not-registered')
     }
@@ -929,6 +937,23 @@ export class Wallets implements WalletsInterface {
       throw new Error('invalid-state')
     }
 
+<<<<<<< HEAD
+    // commitment.isSignUp and signUp also mean 'signIn' from wallet's perspective
+    if (commitment.isSignUp) {
+      await this.signUp({
+        kind: commitment.kind,
+        commitment,
+        code: args.code,
+        noGuard: args.noGuard,
+        target: commitment.target,
+        isRedirect: true,
+        use4337: args.use4337,
+      })
+    } else {
+      const handler = this.shared.handlers.get('login-' + commitment.kind) as AuthCodeHandler
+      if (!handler) {
+        throw new Error('handler-not-registered')
+=======
     switch (commitment.type) {
       case 'add-signer': {
         const handlerKind = getSignupHandlerKey(commitment.kind)
@@ -957,6 +982,7 @@ export class Wallets implements WalletsInterface {
           extra: { signerKind },
         })
         break
+>>>>>>> upstream/master
       }
 
       case 'auth': {
@@ -1075,12 +1101,30 @@ export class Wallets implements WalletsInterface {
     const modules: Module[] = []
 
     if (!args.noSessionManager) {
-      const identitySigners = [device.address]
-      if (!Signers.isSapientSigner(loginSigner.signer)) {
-        // Add non sapient login signer to the identity signers
-        identitySigners.unshift(loginSignerAddress)
+      //  Calculate image hash with the identity signer
+      const sessionsTopology = SessionConfig.emptySessionsTopology(loginSignerAddress)
+      // Store this tree in the state provider
+      const sessionsConfigTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionsTopology)
+      this.shared.sequence.stateProvider.saveTree(sessionsConfigTree)
+      // Prepare the configuration leaf
+      const sessionsImageHash = GenericTree.hash(sessionsConfigTree)
+      const signer = {
+        ...ManagerOptionsDefaults.defaultSessionsTopology,
+        address: this.shared.sequence.extensions.sessions,
+        imageHash: sessionsImageHash,
       }
-      await this.shared.modules.sessions.initSessionModule(modules, identitySigners, sessionsGuardTopology)
+      if (sessionsGuardTopology) {
+        modules.push({
+          sapientLeaf: signer,
+          weight: 255n,
+          guardLeaf: sessionsGuardTopology,
+        })
+      } else {
+        modules.push({
+          sapientLeaf: signer,
+          weight: 255n,
+        })
+      }
     }
 
     if (!args.noRecovery) {
@@ -1246,10 +1290,6 @@ export class Wallets implements WalletsInterface {
 
         if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
           await this.shared.modules.recovery.addRecoverySignerToModules(modules, device.address)
-        }
-
-        if (this.shared.modules.sessions.hasSessionModule(modules)) {
-          await this.shared.modules.sessions.addIdentitySignerToModules(modules, device.address)
         }
 
         const walletEntryToUpdate: Wallet = {
@@ -1510,18 +1550,18 @@ export class Wallets implements WalletsInterface {
       throw new Error('wallet-not-found')
     }
 
+    // Prevent starting logout if already logging out or not ready
+    if (walletEntry.status !== 'ready') {
+      console.warn(`Logout called on wallet ${wallet} with status ${walletEntry.status}. Aborting.`)
+      throw new Error(`Wallet is not in 'ready' state for logout (current: ${walletEntry.status})`)
+    }
+
     if (options?.skipRemoveDevice) {
       await Promise.all([
         this.shared.databases.manager.del(wallet),
         this.shared.modules.devices.remove(walletEntry.device),
       ])
       return undefined as any
-    }
-
-    // Prevent starting logout if already logging out or not ready
-    if (walletEntry.status !== 'ready') {
-      console.warn(`Logout called on wallet ${wallet} with status ${walletEntry.status}. Aborting.`)
-      throw new Error(`Wallet is not in 'ready' state for logout (current: ${walletEntry.status})`)
     }
 
     const device = await this.shared.modules.devices.get(walletEntry.device)
@@ -1711,11 +1751,6 @@ export class Wallets implements WalletsInterface {
     // Remove the device from the recovery module's topology as well.
     if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
       await this.shared.modules.recovery.removeRecoverySignerFromModules(modules, deviceToRemove)
-    }
-
-    // Remove the device from the session module's topology as well.
-    if (this.shared.modules.sessions.hasSessionModule(modules)) {
-      await this.shared.modules.sessions.removeIdentitySignerFromModules(modules, deviceToRemove)
     }
 
     // Request the configuration update.
