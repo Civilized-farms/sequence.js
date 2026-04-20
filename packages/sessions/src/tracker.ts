@@ -5,6 +5,7 @@ export type PresignedConfig = {
   wallet: string
   nextConfig: commons.config.Config
   signature: string
+  referenceChainId?: ethers.BigNumberish
 }
 
 export type PresignedConfigLink = Omit<PresignedConfig, 'nextConfig'> & { nextImageHash: string }
@@ -18,7 +19,7 @@ export type ConfigDataDump = {
   presignedTransactions: PresignedConfigLink[]
 }
 
-export abstract class ConfigTracker {
+export interface ConfigTracker {
   loadPresignedConfiguration: (args: {
     wallet: string
     fromImageHash: string
@@ -48,7 +49,7 @@ export abstract class ConfigTracker {
       wallet: string
       proof: {
         digest: string
-        chainId: ethers.BigNumber
+        chainId: bigint
         signature: string
       }
     }[]

@@ -10,7 +10,8 @@ import {
 } from '../../types'
 import { WalletRequestHandler } from '../wallet-request-handler'
 import { BaseWalletTransport } from '../base-wallet-transport'
-import { logger, sanitizeNumberString, base64DecodeObject } from '@0xsequence/utils'
+import { logger, base64DecodeObject, bigintReviver, bigintReplacer } from '@0xsequence/utils'
+import { ethers } from 'ethers'
 
 export class WindowMessageHandler extends BaseWalletTransport {
   protected parentWindow: Window
@@ -30,7 +31,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
     }
 
     // record open details (sessionId + default network) from the window url
-    const { pathname, search: rawParams } = new URL(windowHref || window.location.href)
+    const { search: rawParams } = new URL(windowHref || window.location.href)
 
     let session: TransportSession | null = this.getWindowTransportSession(rawParams)
 
@@ -92,11 +93,14 @@ export class WindowMessageHandler extends BaseWalletTransport {
     // Wallet always expects json-rpc request messages from a dapp
     let request: ProviderMessageRequest
     try {
-      request = JSON.parse(event.data)
+      request = JSON.parse(event.data, bigintReviver)
     } catch (err) {
       // event is not a ProviderMessage JSON object, skip
       return
     }
+
+    // Set the origin on the request
+    request.origin ??= event.origin
 
     logger.debug('RECEIVED MESSAGE', request)
 
@@ -117,7 +121,7 @@ export class WindowMessageHandler extends BaseWalletTransport {
   // postMessage sends message to the dapp window
   sendMessage(message: ProviderMessage<any>) {
     // prepare payload
-    const payload = JSON.stringify(message)
+    const payload = JSON.stringify(message, bigintReplacer)
 
     // post-message to app.
     // only for init requests, we send to '*' origin
@@ -139,13 +143,8 @@ export class WindowMessageHandler extends BaseWalletTransport {
     }
 
     if (init) {
-      // init message transmission. If we already know the app origin, restrict to it;
-      // do not fall back to a global target, to avoid leaking sensitive data.
-      if (this.appOrigin && this.appOrigin.length > 4) {
-        this.parentWindow.postMessage(message, this.appOrigin)
-      } else {
-        logger.error('unable to postMessage init message as appOrigin is invalid or unavailable')
-      }
+      // init message transmission to global target -- for 'init' payloads only
+      this.parentWindow.postMessage(message, '*')
     } else {
       // open message transmission
       if (this.appOrigin && this.appOrigin.length > 4) {

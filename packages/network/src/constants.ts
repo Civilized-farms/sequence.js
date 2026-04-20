@@ -1,3 +1,32 @@
+export enum NetworkType {
+  MAINNET = 'mainnet',
+  TESTNET = 'testnet'
+}
+
+export type BlockExplorerConfig = {
+  name?: string
+  rootUrl: string
+  addressUrl?: string
+  txnHashUrl?: string
+}
+
+export interface NetworkMetadata {
+  chainId: ChainId
+  type?: NetworkType
+  name: string
+  title?: string
+  logoURI?: string
+  blockExplorer?: BlockExplorerConfig
+  ensAddress?: string
+  testnet?: boolean // Deprecated field, use type instead
+  deprecated?: boolean // The actual network is deprecated
+  nativeToken: {
+    symbol: string
+    name: string
+    decimals: number
+  }
+}
+
 export enum ChainId {
   // Ethereum
   MAINNET = 1,
@@ -51,58 +80,72 @@ export enum ChainId {
   XAI = 660279,
   XAI_SEPOLIA = 37714555429,
 
-  // Astar
-  ASTAR_ZKEVM = 3776,
-  ASTAR_ZKYOTO = 6038361,
-
   // XR
+  XR1 = 273,
   XR_SEPOLIA = 2730,
 
   // TELOS
   TELOS = 40,
+  TELOS_TESTNET = 41,
 
   // B3 Sepolia
+  B3 = 8333,
   B3_SEPOLIA = 1993,
 
   // APE Chain
+  APECHAIN = 33139,
   APECHAIN_TESTNET = 33111,
 
   // Blast
   BLAST = 81457,
   BLAST_SEPOLIA = 168587773,
 
+  // Borne
+  BORNE_TESTNET = 94984,
+
+  // SKALE Nebula
+  SKALE_NEBULA = 1482601649,
+  SKALE_NEBULA_TESTNET = 37084624,
+
+  // Soneium Minato
+  SONEIUM_MINATO = 1946,
+  SONEIUM = 1868,
+
+  // TOY Testnet
+  TOY_TESTNET = 21000000,
+
+  // Immutable zkEVM
+  IMMUTABLE_ZKEVM = 13371,
+  IMMUTABLE_ZKEVM_TESTNET = 13473,
+
+  // The Root Network
+  ROOT_NETWORK = 7668,
+  ROOT_NETWORK_PORCINI = 7672,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
-  HARDHAT_2 = 31338
-}
+  HARDHAT_2 = 31338,
 
-export enum NetworkType {
-  MAINNET = 'mainnet',
-  TESTNET = 'testnet'
-}
+  // LAOS
+  LAOS = 6283,
+  LAOS_SIGMA_TESTNET = 62850,
 
-export type BlockExplorerConfig = {
-  name?: string
-  rootUrl: string
-  addressUrl?: string
-  txnHashUrl?: string
-}
+  //ETHERLINK
+  ETHERLINK = 42793,
+  ETHERLINK_TESTNET = 128123,
 
-export interface NetworkMetadata {
-  chainId: ChainId
-  type?: NetworkType
-  name: string
-  title?: string
-  logoURI?: string
-  blockExplorer?: BlockExplorerConfig
-  ensAddress?: string
-  testnet?: boolean // Deprecated field, use type instead
-  deprecated?: boolean // The actual network is deprecated
-  nativeToken: {
-    symbol: string
-    name: string
-    decimals: number
-  }
+  // MOONBEAM
+  MOONBEAM = 1284,
+  MOONBASE_ALPHA = 1287,
+
+  //MONAD_TESTNET
+  MONAD_TESTNET = 10143,
+
+  //SOMNIA_TESTNET
+  SOMNIA_TESTNET = 50312,
+
+  //FREQUENCY_TESTNET
+  FREQUENCY_TESTNET = 53716
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -226,8 +269,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://polygonscan.com/'
     },
     nativeToken: {
-      symbol: 'MATIC',
-      name: 'Polygon',
+      symbol: 'POL',
+      name: 'POL',
       decimals: 18
     }
   },
@@ -261,8 +304,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://www.oklink.com/amoy/'
     },
     nativeToken: {
-      symbol: 'aMATIC',
-      name: 'Amoy Polygon',
+      symbol: 'aPOL',
+      name: 'Amoy POL',
       decimals: 18
     }
   },
@@ -617,36 +660,20 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-  [ChainId.ASTAR_ZKEVM]: {
-    chainId: ChainId.ASTAR_ZKEVM,
+  [ChainId.XR1]: {
+    chainId: ChainId.XR1,
     type: NetworkType.MAINNET,
-    name: 'astar-zkevm',
-    title: 'Astar zkEVM',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ASTAR_ZKEVM}.webp`,
-    blockExplorer: {
-      name: 'Astar zkEVM Explorer',
-      rootUrl: 'https://astar-zkevm.explorer.startale.com/'
-    },
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    }
-  },
-  [ChainId.ASTAR_ZKYOTO]: {
-    chainId: ChainId.ASTAR_ZKYOTO,
-    type: NetworkType.TESTNET,
-    name: 'astar-zkyoto',
-    title: 'Astar zKyoto Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ASTAR_ZKYOTO}.webp`,
+    name: 'xr1',
+    title: 'XR1',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XR1}.webp`,
     testnet: true,
     blockExplorer: {
-      name: 'Astar zKyoto Explorer',
-      rootUrl: 'https://astar-zkyoto.blockscout.com/'
+      name: 'XR1 Explorer',
+      rootUrl: 'https://xr1.calderaexplorer.xyz/'
     },
     nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
+      symbol: 'XR1',
+      name: 'XR1',
       decimals: 18
     }
   },
@@ -667,6 +694,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
+  [ChainId.B3]: {
+    chainId: ChainId.B3,
+    type: NetworkType.MAINNET,
+    name: 'b3',
+    title: 'B3',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'B3 Explorer',
+      rootUrl: 'https://explorer.b3.fun/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
   [ChainId.B3_SEPOLIA]: {
     chainId: ChainId.B3_SEPOLIA,
     type: NetworkType.TESTNET,
@@ -681,6 +725,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'ETH',
       name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.APECHAIN]: {
+    chainId: ChainId.APECHAIN,
+    type: NetworkType.MAINNET,
+    name: 'apechain',
+    title: 'APE Chain',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.APECHAIN}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'APE Chain Explorer',
+      rootUrl: 'https://apechain.calderaexplorer.xyz/'
+    },
+    nativeToken: {
+      symbol: 'APE',
+      name: 'ApeCoin',
       decimals: 18
     }
   },
@@ -750,7 +811,192 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-
+  [ChainId.TELOS_TESTNET]: {
+    chainId: ChainId.TELOS_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'telos-testnet',
+    title: 'Telos Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TELOS_TESTNET}.webp`,
+    blockExplorer: {
+      name: 'Telos Testnet Explorer',
+      rootUrl: 'https://explorer-test.telos.net/network'
+    },
+    nativeToken: {
+      symbol: 'TLOS',
+      name: 'TLOS',
+      decimals: 18
+    }
+  },
+  [ChainId.BORNE_TESTNET]: {
+    chainId: ChainId.BORNE_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'borne-testnet',
+    title: 'Borne Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BORNE_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Borne Testnet Explorer',
+      rootUrl: 'https://subnets-test.avax.network/bornegfdn'
+    },
+    nativeToken: {
+      symbol: 'BORNE',
+      name: 'BORNE',
+      decimals: 18
+    }
+  },
+  [ChainId.SKALE_NEBULA]: {
+    chainId: ChainId.SKALE_NEBULA,
+    type: NetworkType.MAINNET,
+    name: 'skale-nebula',
+    title: 'SKALE Nebula Gaming Hub',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_NEBULA}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'SKALE Nebula Gaming Hub Explorer',
+      rootUrl: 'https://green-giddy-denebola.explorer.mainnet.skalenodes.com/'
+    },
+    nativeToken: {
+      symbol: 'sFUEL',
+      name: 'SKALE Fuel',
+      decimals: 18
+    }
+  },
+  [ChainId.SKALE_NEBULA_TESTNET]: {
+    chainId: ChainId.SKALE_NEBULA_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'skale-nebula-testnet',
+    title: 'SKALE Nebula Gaming Hub Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_NEBULA_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'SKALE Nebula Gaming Hub Testnet Explorer',
+      rootUrl: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/'
+    },
+    nativeToken: {
+      symbol: 'sFUEL',
+      name: 'SKALE Fuel',
+      decimals: 18
+    }
+  },
+  [ChainId.SONEIUM]: {
+    chainId: ChainId.SONEIUM,
+    type: NetworkType.MAINNET,
+    name: 'soneium',
+    title: 'Soneium',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SONEIUM}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Soneium Explorer',
+      rootUrl: 'https://soneium.blockscout.com/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.SONEIUM_MINATO]: {
+    chainId: ChainId.SONEIUM_MINATO,
+    type: NetworkType.TESTNET,
+    name: 'soneium-minato',
+    title: 'Soneium Minato (Testnet)',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SONEIUM_MINATO}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Soneium Minato Explorer',
+      rootUrl: 'https://explorer-testnet.soneium.org/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.TOY_TESTNET]: {
+    chainId: ChainId.TOY_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'toy-testnet',
+    title: 'TOY (Testnet)',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TOY_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'TOY Testnet Explorer',
+      rootUrl: 'https://toy-chain-testnet.explorer.caldera.xyz/'
+    },
+    nativeToken: {
+      symbol: 'TOY',
+      name: 'TOY',
+      decimals: 18
+    }
+  },
+  [ChainId.IMMUTABLE_ZKEVM]: {
+    chainId: ChainId.IMMUTABLE_ZKEVM,
+    type: NetworkType.MAINNET,
+    name: 'immutable-zkevm',
+    title: 'Immutable zkEVM',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Immutable zkEVM Explorer',
+      rootUrl: 'https://explorer.immutable.com/'
+    },
+    nativeToken: {
+      symbol: 'IMX',
+      name: 'IMX',
+      decimals: 18
+    }
+  },
+  [ChainId.IMMUTABLE_ZKEVM_TESTNET]: {
+    chainId: ChainId.IMMUTABLE_ZKEVM_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'immutable-zkevm-testnet',
+    title: 'Immutable zkEVM Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Immutable zkEVM Testnet Explorer',
+      rootUrl: 'https://explorer.testnet.immutable.com/'
+    },
+    nativeToken: {
+      symbol: 'IMX',
+      name: 'IMX',
+      decimals: 18
+    }
+  },
+  [ChainId.ROOT_NETWORK]: {
+    chainId: ChainId.ROOT_NETWORK,
+    type: NetworkType.MAINNET,
+    name: 'rootnet',
+    title: 'The Root Network',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROOT_NETWORK}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'The Root Network Explorer',
+      rootUrl: 'https://rootscan.io/'
+    },
+    nativeToken: {
+      symbol: 'XRP',
+      name: 'XRP',
+      decimals: 18
+    }
+  },
+  [ChainId.ROOT_NETWORK_PORCINI]: {
+    chainId: ChainId.ROOT_NETWORK_PORCINI,
+    type: NetworkType.TESTNET,
+    name: 'rootnet-porcini',
+    title: 'The Root Network Porcini Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROOT_NETWORK_PORCINI}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'The Root Network Porcini Testnet Explorer',
+      rootUrl: 'https://porcini.rootscan.io/'
+    },
+    nativeToken: {
+      symbol: 'XRP',
+      name: 'XRP',
+      decimals: 18
+    }
+  },
   [ChainId.HARDHAT]: {
     chainId: ChainId.HARDHAT,
     name: 'hardhat',
@@ -770,5 +1016,169 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Ether',
       decimals: 18
     }
+  },
+  [ChainId.LAOS]: {
+    chainId: ChainId.LAOS,
+    type: NetworkType.MAINNET,
+    name: 'laos',
+    title: 'LAOS',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.LAOS}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'LAOS Explorer',
+      rootUrl: 'https://blockscout.laos.laosfoundation.io/'
+    },
+    nativeToken: {
+      symbol: 'LAOS',
+      name: 'LAOS',
+      decimals: 18
+    }
+  },
+  [ChainId.LAOS_SIGMA_TESTNET]: {
+    chainId: ChainId.LAOS_SIGMA_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'laos-sigma-testnet',
+    title: 'LAOS Sigma Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.LAOS_SIGMA_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'LAOS Sigma Testnet Explorer',
+      rootUrl: 'https://sigma.explorer.laosnetwork.io/'
+    },
+    nativeToken: {
+      symbol: 'SIGMA',
+      name: 'SIGMA',
+      decimals: 18
+    }
+  },
+  [ChainId.MOONBEAM]: {
+    chainId: ChainId.MOONBEAM,
+    type: NetworkType.MAINNET,
+    name: 'moonbeam',
+    title: 'Moonbeam',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBEAM}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Moonscan',
+      rootUrl: 'https://moonscan.io/'
+    },
+    nativeToken: {
+      symbol: 'GLMR',
+      name: 'GLMR',
+      decimals: 18
+    }
+  },
+  [ChainId.MOONBASE_ALPHA]: {
+    chainId: ChainId.MOONBASE_ALPHA,
+    type: NetworkType.TESTNET,
+    name: 'moonbase-alpha',
+    title: 'Moonbase Alpha',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBASE_ALPHA}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Moonscan (Moonbase Alpha)',
+      rootUrl: 'https://moonbase.moonscan.io/'
+    },
+    nativeToken: {
+      symbol: 'GLMR',
+      name: 'GLMR',
+      decimals: 18
+    }
+  },
+  [ChainId.ETHERLINK]: {
+    chainId: ChainId.ETHERLINK,
+    type: NetworkType.MAINNET,
+    name: 'etherlink',
+    title: 'Etherlink',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ETHERLINK}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Etherlink Explorer',
+      rootUrl: 'https://explorer.etherlink.com/'
+    },
+    nativeToken: {
+      symbol: 'XTZ',
+      name: 'Tez',
+      decimals: 18
+    }
+  },
+  [ChainId.ETHERLINK_TESTNET]: {
+    chainId: ChainId.ETHERLINK_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'etherlink-testnet',
+    title: 'Etherlink Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ETHERLINK_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Etherlink Testnet Explorer',
+      rootUrl: 'https://testnet.explorer.etherlink.com/'
+    },
+    nativeToken: {
+      symbol: 'XTZ',
+      name: 'Tez',
+      decimals: 18
+    }
+  },
+  [ChainId.MONAD_TESTNET]: {
+    chainId: ChainId.MONAD_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'monad-testnet',
+    title: 'Monad Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MONAD_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Monad Testnet Explorer',
+      rootUrl: 'https://testnet.monadexplorer.com/'
+    },
+    nativeToken: {
+      symbol: 'MON',
+      name: 'MON',
+      decimals: 18
+    }
+  },
+
+  [ChainId.SOMNIA_TESTNET]: {
+    chainId: ChainId.SOMNIA_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'somnia-testnet',
+    title: 'Somnia Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SOMNIA_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Somnia Testnet Explorer',
+      rootUrl: 'https://somnia-testnet.socialscan.io/'
+    },
+    nativeToken: {
+      symbol: 'STT',
+      name: 'STT',
+      decimals: 18
+    }
+  },
+
+  [ChainId.FREQUENCY_TESTNET]: {
+    chainId: ChainId.FREQUENCY_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'frequency-testnet',
+    title: 'Frequency Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.FREQUENCY_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Frequency Testnet Explorer',
+      rootUrl: 'https://explorer.frequency.zeeve.net/'
+    },
+    nativeToken: {
+      symbol: 'BERA',
+      name: 'BERA',
+      decimals: 18
+    }
   }
+}
+
+export function getChainIdFromNetwork(networkName: string): ChainId {
+  for (const [chainId, network] of Object.entries(networks)) {
+    if (network.name === networkName) {
+      return Number(chainId) as ChainId
+    }
+  }
+  throw new Error(`Unknown network name: ${networkName}`)
 }

@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
 import * as proto from './relayer.gen'
 import { commons } from '@0xsequence/core'
-import { getEthersConnectionInfo, logger } from '@0xsequence/utils'
+import { bigintReplacer, getFetchRequest, logger, toHexString } from '@0xsequence/utils'
 
 export { proto }
 
@@ -16,37 +16,30 @@ const FINAL_STATUSES = [
 const FAILED_STATUSES = [proto.ETHTxnStatus.DROPPED, proto.ETHTxnStatus.PARTIALLY_FAILED, proto.ETHTxnStatus.FAILED]
 
 export interface RpcRelayerOptions {
-  provider: ethers.providers.Provider | { url: string }
+  provider: ethers.AbstractProvider | { url: string }
   url: string
   projectAccessKey?: string
   jwtAuth?: string
 }
 
 export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
-  return (
-    obj.url !== undefined &&
-    typeof obj.url === 'string' &&
-    obj.provider !== undefined &&
-    ethers.providers.Provider.isProvider(obj.provider)
-  )
+  return obj.url !== undefined && typeof obj.url === 'string' && obj.provider !== undefined && isAbstractProvider(obj.provider)
 }
-
-const fetch = typeof global === 'object' ? global.fetch : window.fetch
 
 // TODO: rename to SequenceRelayer
 export class RpcRelayer implements Relayer {
   private readonly service: proto.Relayer
-  public readonly provider: ethers.providers.Provider
+  public readonly provider: ethers.Provider
 
   constructor(public options: RpcRelayerOptions) {
     this.service = new proto.Relayer(options.url, this._fetch)
 
-    if (ethers.providers.Provider.isProvider(options.provider)) {
+    if (isAbstractProvider(options.provider)) {
       this.provider = options.provider
     } else {
       const { jwtAuth, projectAccessKey } = this.options
-      const providerConnectionInfo = getEthersConnectionInfo(options.provider.url, projectAccessKey, jwtAuth)
-      this.provider = new ethers.providers.StaticJsonRpcProvider(providerConnectionInfo)
+      const fetchRequest = getFetchRequest(options.provider.url, projectAccessKey, jwtAuth)
+      this.provider = new ethers.JsonRpcProvider(fetchRequest, undefined, { staticNetwork: true })
     }
   }
 
@@ -66,7 +59,7 @@ export class RpcRelayer implements Relayer {
     }
 
     // before the request is made
-    init!.headers = { ...init!.headers, ...headers }
+    init!.headers = { ...headers, ...init!.headers }
 
     return fetch(input, init)
   }
@@ -114,7 +107,7 @@ export class RpcRelayer implements Relayer {
   }
 
   async simulate(wallet: string, ...transactions: commons.transaction.Transaction[]): Promise<SimulateResult[]> {
-    const coder = ethers.utils.defaultAbiCoder
+    const coder = ethers.AbiCoder.defaultAbiCoder()
     const encoded = coder.encode(
       [commons.transaction.MetaTransactionsType],
       [commons.transaction.sequenceTxAbiEncode(transactions)]
@@ -152,7 +145,7 @@ export class RpcRelayer implements Relayer {
         })
       })
 
-      logger.info(`[rpc-relayer/getFeeOptions] got refund options ${JSON.stringify(options)}`)
+      logger.info(`[rpc-relayer/getFeeOptions] got refund options ${JSON.stringify(options, bigintReplacer)}`)
       return { options, quote: { _tag: 'FeeQuote', _quote: quote } }
     } else {
       logger.info(`[rpc-relayer/getFeeOptions] relayer fees are not required`)
@@ -162,17 +155,21 @@ export class RpcRelayer implements Relayer {
 
   async getFeeOptionsRaw(
     entrypoint: string,
-    data: ethers.utils.BytesLike,
+    data: ethers.BytesLike,
     options?: {
       simulate?: boolean
+      projectAccessKey?: string
     }
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
-    const { options: feeOptions, quote } = await this.service.feeOptions({
-      wallet: entrypoint,
-      to: entrypoint,
-      data: ethers.utils.hexlify(data),
-      simulate: options?.simulate
-    })
+    const { options: feeOptions, quote } = await this.service.feeOptions(
+      {
+        wallet: entrypoint,
+        to: entrypoint,
+        data: ethers.hexlify(data),
+        simulate: options?.simulate
+      },
+      { ...(options?.projectAccessKey ? { 'X-Access-Key': options.projectAccessKey } : undefined) }
+    )
 
     return { options: feeOptions, quote: { _tag: 'FeeQuote', _quote: quote } }
   }
@@ -184,9 +181,9 @@ export class RpcRelayer implements Relayer {
 
   async getNonce(address: string, space?: ethers.BigNumberish): Promise<ethers.BigNumberish> {
     logger.info(`[rpc-relayer/getNonce] get nonce for wallet ${address} space: ${space}`)
-    const encodedNonce = space !== undefined ? ethers.BigNumber.from(space).toHexString() : undefined
+    const encodedNonce = space !== undefined ? toHexString(BigInt(space)) : undefined
     const resp = await this.service.getMetaTxnNonce({ walletContractAddress: address, space: encodedNonce })
-    const nonce = ethers.BigNumber.from(resp.nonce)
+    const nonce = BigInt(resp.nonce)
     const [decodedSpace, decodedNonce] = commons.transaction.decodeNonce(nonce)
     logger.info(`[rpc-relayer/getNonce] got next nonce for wallet ${address} ${decodedNonce} space: ${decodedSpace}`)
     return nonce
@@ -195,10 +192,11 @@ export class RpcRelayer implements Relayer {
   async relay(
     signedTxs: commons.transaction.IntendedTransactionBundle,
     quote?: FeeQuote,
-    waitForReceipt: boolean = true
+    waitForReceipt: boolean = true,
+    projectAccessKey?: string
   ): Promise<commons.transaction.TransactionResponse<RelayerTxReceipt>> {
     logger.info(
-      `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs)} with quote ${JSON.stringify(quote)}`
+      `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs, bigintReplacer)} with quote ${JSON.stringify(quote, bigintReplacer)}`
     )
 
     let typecheckedQuote: string | undefined
@@ -216,16 +214,19 @@ export class RpcRelayer implements Relayer {
     }
 
     const data = commons.transaction.encodeBundleExecData(signedTxs)
-    const metaTxn = await this.service.sendMetaTxn({
-      call: {
-        walletAddress: signedTxs.intent.wallet,
-        contract: signedTxs.entrypoint,
-        input: data
+    const metaTxn = await this.service.sendMetaTxn(
+      {
+        call: {
+          walletAddress: signedTxs.intent.wallet,
+          contract: signedTxs.entrypoint,
+          input: data
+        },
+        quote: typecheckedQuote
       },
-      quote: typecheckedQuote
-    })
+      { ...(projectAccessKey ? { 'X-Access-Key': projectAccessKey } : undefined) }
+    )
 
-    logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn)}`)
+    logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn, bigintReplacer)}`)
 
     if (waitForReceipt) {
       return this.wait(signedTxs.intent.id)
@@ -234,10 +235,10 @@ export class RpcRelayer implements Relayer {
         hash: signedTxs.intent.id,
         confirmations: 0,
         from: signedTxs.intent.wallet,
-        wait: (_confirmations?: number): Promise<ethers.providers.TransactionReceipt> => Promise.reject(new Error('impossible'))
+        wait: (_confirmations?: number): Promise<ethers.TransactionReceipt | null> => Promise.reject(new Error('impossible'))
       }
 
-      const wait = async (confirmations?: number): Promise<ethers.providers.TransactionReceipt> => {
+      const wait = async (confirmations?: number): Promise<ethers.TransactionReceipt | null> => {
         if (!this.provider) {
           throw new Error('cannot wait for receipt, relayer has no provider set')
         }
@@ -256,6 +257,9 @@ export class RpcRelayer implements Relayer {
 
       response.wait = wait
 
+      // NOTE: we just ignore these errors which come from the private fields
+      // of ethers-v6 .. but, we should probably rework this instead..
+      // @ts-ignore
       return response as commons.transaction.TransactionResponse
     }
   }
@@ -286,9 +290,12 @@ export class RpcRelayer implements Relayer {
 
     const txReceipt = JSON.parse(receipt.txnReceipt) as RelayerTxReceipt
 
+    // NOTE: we just ignore these errors which come from the private fields
+    // of ethers-v6 .. but, we should probably rework this instead..
+    // @ts-ignore
     return {
       blockHash: txReceipt.blockHash,
-      blockNumber: ethers.BigNumber.from(txReceipt.blockNumber).toNumber(),
+      blockNumber: Number(txReceipt.blockNumber),
       confirmations: 1,
       from: typeof metaTxnId === 'string' ? undefined : metaTxnId.intent.wallet,
       hash: txReceipt.transactionHash,
@@ -296,6 +303,42 @@ export class RpcRelayer implements Relayer {
       receipt: txReceipt, // extended type which is Sequence-specific. Contains the decoded metaTxReceipt
       wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations)
     } as commons.transaction.TransactionResponse
+  }
+
+  async getMetaTransactions(
+    projectId: number,
+    page?: proto.Page
+  ): Promise<{
+    page: proto.Page
+    transactions: proto.MetaTxnLog[]
+  }> {
+    return this.service.getMetaTransactions({ projectId, page })
+  }
+
+  async getTransactionCost(
+    projectId: number,
+    from: string,
+    to: string
+  ): Promise<{
+    cost: number
+  }> {
+    return this.service.getTransactionCost({ projectId, from, to })
+  }
+
+  async listGasSponsors(args: proto.ListGasSponsorsArgs): Promise<proto.ListGasSponsorsReturn> {
+    return this.service.listGasSponsors(args)
+  }
+
+  async addGasSponsor(args: proto.AddGasSponsorArgs): Promise<proto.AddGasSponsorReturn> {
+    return this.service.addGasSponsor(args)
+  }
+
+  async updateGasSponsor(args: proto.UpdateGasSponsorArgs): Promise<proto.UpdateGasSponsorReturn> {
+    return this.service.updateGasSponsor(args)
+  }
+
+  async removeGasSponsor(args: proto.RemoveGasSponsorArgs): Promise<proto.RemoveGasSponsorReturn> {
+    return this.service.removeGasSponsor(args)
   }
 }
 
@@ -325,4 +368,13 @@ export type RelayerTxReceipt = {
   status: string
   transactionHash: string
   transactionIndex: string
+}
+
+function isAbstractProvider(provider: any): provider is ethers.AbstractProvider {
+  return (
+    provider &&
+    typeof provider === 'object' &&
+    typeof provider.getNetwork === 'function' &&
+    typeof provider.getBlockNumber === 'function'
+  )
 }

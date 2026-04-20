@@ -2,7 +2,7 @@ import * as chai from 'chai'
 import { ethers } from 'ethers'
 
 import { Intent, signIntent } from '../src/intents'
-import { IntentDataSendTransaction, IntentDataSignMessage } from '../src/clients/intent.gen'
+import { IntentName, IntentDataSendTransaction, IntentDataSignMessage } from '../src/clients/intent.gen'
 import { newSECP256K1SessionFromPrivateKey } from '../src/session'
 import { getDefaultSecureStoreBackend } from '../src/secure-store'
 
@@ -14,7 +14,7 @@ describe('Payloads', () => {
   it('Should sign a payload', async () => {
     const intent: Intent<IntentDataSendTransaction> = {
       version: '1',
-      name: 'sendTransactions',
+      name: IntentName.sendTransaction,
       issuedAt: 1600000000,
       expiresAt: 1600000000 + 86400,
       data: {
@@ -24,7 +24,7 @@ describe('Payloads', () => {
         transactions: [
           {
             type: 'erc20send',
-            token: ethers.constants.AddressZero,
+            token: ethers.ZeroAddress,
             to: '0x0dc9603d4da53841C1C83f3B550C6143e60e0425',
             value: '0'
           }
@@ -45,14 +45,14 @@ describe('Payloads', () => {
     expect(signedIntent.signatures.length).to.equal(1)
     expect(signedIntent.signatures[0].sessionId).to.equal(await session.sessionId())
     expect(signedIntent.signatures[0].signature).to.equal(
-      '0x14682ca0eb116109cdf1d0bad6a84e29787787b4a1779d2b43c28d8705ade929267474e8a7725d5e7540ded2010897d3ecaad32b27c75fbfb4f63ff1cf1a948a1c'
+      '0x0707e5b0a66bc2aa536cd6dfd0ad3f7859ac3a864f9be1d351b450e704b4cf3548b19ffd72f956e1448b0298b862c95489daeb00c0f0686a8c76f22908bf29801b'
     )
   })
 
   it('Should sign a message payload', async () => {
     const intent: Intent<IntentDataSignMessage> = {
       version: '1',
-      name: 'sendTransactions',
+      name: IntentName.sendTransaction,
       issuedAt: 1600000000,
       expiresAt: 1600000000 + 86400,
       data: {
@@ -75,14 +75,14 @@ describe('Payloads', () => {
     expect(signedIntent.signatures.length).to.equal(1)
     expect(signedIntent.signatures[0].sessionId).to.equal(await session.sessionId())
     expect(signedIntent.signatures[0].signature).to.equal(
-      '0x768b25315317e551ed7b540e73fdf69d8816dcc763a50c648cf2966849f089a2495103f06c876c502bfb33cb348c4b77ffe39bbd6483b932b806a5817374f9ea1c'
+      '0xf21bd58b31a490895c64eec3848465dc89426a208b2a480013e0f779003474d41be802c900c03841a467e6598785e8e7c29b506ff78ec7d08cdccba2be7ecc8c1c'
     )
   })
 
   it('Should sign transaction payload', async () => {
     const intent: Intent<IntentDataSendTransaction> = {
       version: '1',
-      name: 'sendTransactions',
+      name: IntentName.sendTransaction,
       issuedAt: 1600000000,
       expiresAt: 1600000000 + 86400,
       data: {
@@ -127,19 +127,16 @@ describe('Payloads', () => {
             data: '0x223344'
           },
           {
-            type: 'delayedEncode',
+            type: 'contractCall',
             to: '0x140d72763D1ce39Ad4E2e73EC6e8FC53E5b73B64',
-            value: '0',
             data: {
-              abi: '[{"inputs":[{"internalType":"uint256","name":"_orderId","type":"uint256"},{"internalType":"uint256","name":"_maxCost","type":"uint256"},{"internalType":"address[]","name":"_fees","type":"address[]"},{"internalType":"bytes","name":"_data","type":"bytes"}],"name":"fillOrKillOrder","outputs":[],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_val","type":"uint256"},{"internalType":"string","name":"_data","type":"string"}],"name":"notExpired","outputs":[],"stateMutability":"view","type":"function"},{"inputs":[],"name":"otherMethods","outputs":[],"stateMutability":"nonpayable","type":"function"}]',
-              func: 'fillOrKillOrder',
+              abi: 'fillOrKillOrder(uint256 orderId, uint256 maxCost, address[] fees, bytes data)',
               args: [
                 '48774435471364917511246724398022004900255301025912680232738918790354204737320',
                 '1000000000000000000',
-                '["0x8541D65829f98f7D71A4655cCD7B2bB8494673bF"]',
+                ['0x8541D65829f98f7D71A4655cCD7B2bB8494673bF'],
                 {
                   abi: 'notExpired(uint256,string)',
-                  func: 'notExpired',
                   args: ['1600000000', 'Nov 1st, 2020']
                 }
               ]
@@ -162,7 +159,7 @@ describe('Payloads', () => {
     expect(signedIntent.signatures.length).to.equal(1)
     expect(signedIntent.signatures[0].sessionId).to.equal(await session.sessionId())
     expect(signedIntent.signatures[0].signature).to.equal(
-      '0x98dd84b3d4fe077b2f55e2839609b226d8119b9b0ee10756122615a5d68746bf60596069a305a7533123f212b576d16f3f14ad06faed9fc005c32a28bf8bafb21b'
+      '0x692c5c4c969f54dc96b216e41a80b5366829754e652a5a6b499aa7b4fb3c086664cbf282568c863030c4183ae0c05a2861bfb5de1e76fea94f71796ff6cd1c9f1c'
     )
   })
 })

@@ -260,7 +260,7 @@ export class Session {
         // Only update the onchain config if the imageHash has changed
         if (account.coders.config.imageHashOf(prevConfig) !== account.coders.config.imageHashOf(nextConfig)) {
           const newConfig = account.coders.config.editConfig(nextConfig, {
-            checkpoint: account.coders.config.checkpointOf(prevConfig).add(1)
+            checkpoint: account.coders.config.checkpointOf(prevConfig) + 1n
           })
 
           await account.updateConfig(newConfig)
@@ -321,8 +321,9 @@ export class Session {
     dump: SessionDumpV1 | SessionDumpV2
     editConfigOnMigration: (config: commons.config.Config) => commons.config.Config
     onMigration?: (account: Account) => Promise<boolean>
+    projectAccessKey?: string
   }): Promise<Session> {
-    const { dump, settings, editConfigOnMigration, onMigration, orchestrator } = args
+    const { dump, settings, editConfigOnMigration, onMigration, orchestrator, projectAccessKey } = args
     const { contexts, networks, tracker, services } = { ...SessionSettingsDefault, ...settings }
 
     let account: Account
@@ -343,7 +344,8 @@ export class Session {
         networks,
         contexts,
         orchestrator,
-        jwt: jwtExpired ? undefined : dump.jwt?.token
+        jwt: jwtExpired ? undefined : dump.jwt?.token,
+        projectAccessKey
       })
 
       // TODO: This property may not hold if the user adds a new network
@@ -370,7 +372,8 @@ export class Session {
         networks,
         contexts,
         orchestrator,
-        jwt: jwtExpired ? undefined : dump.jwt?.token
+        jwt: jwtExpired ? undefined : dump.jwt?.token,
+        projectAccessKey
       })
     } else {
       throw Error('Invalid dump format')

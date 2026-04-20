@@ -1,14 +1,6 @@
-<<<<<<< HEAD:packages/api/src/index.ts
 export * from './api.gen'
 
 import { API as ApiRpc } from './api.gen'
-=======
-export * from './userdata.gen.js'
-
-import { UserData as UserdataRpc } from './userdata.gen.js'
->>>>>>> upstream/master:packages/services/userdata/src/index.ts
-
-const fetch = typeof global === 'object' ? global.fetch : window.fetch
 
 export class SequenceAPIClient extends ApiRpc {
   constructor(
@@ -23,7 +15,7 @@ export class SequenceAPIClient extends ApiRpc {
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
     // automatically include jwt and access key auth header to requests
     // if its been set on the api client
-    const headers: Record<string, string> = {}
+    const headers: { [key: string]: any } = {}
 
     const jwtAuth = this.jwtAuth
     const projectAccessKey = this.projectAccessKey

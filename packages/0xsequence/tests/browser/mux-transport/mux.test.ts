@@ -26,14 +26,14 @@ export const tests = async () => {
   //
   // Providers
   //
-  const provider1 = new ethers.providers.JsonRpcProvider('http://localhost:8545')
-  const provider2 = new ethers.providers.JsonRpcProvider('http://localhost:9545')
+  const provider1 = new ethers.JsonRpcProvider('http://localhost:8545', undefined, { cacheTimeout: -1 })
+  const provider2 = new ethers.JsonRpcProvider('http://localhost:9545', undefined, { cacheTimeout: -1 })
 
   //
   // Deploy Sequence WalletContext (deterministic).
   //
-  const deployedWalletContext = await utils.context.deploySequenceContexts(provider1.getSigner())
-  await utils.context.deploySequenceContexts(provider2.getSigner())
+  const deployedWalletContext = await utils.context.deploySequenceContexts(await provider1.getSigner())
+  await utils.context.deploySequenceContexts(await provider2.getSigner())
   console.log('walletContext:', deployedWalletContext)
 
   //
@@ -55,18 +55,20 @@ export const tests = async () => {
 
   // Network available list
   const networks: NetworkConfig[] = [
+    // @ts-ignore
     {
       name: 'hardhat',
       chainId: 31337,
-      rpcUrl: provider1.connection.url,
+      rpcUrl: provider1._getConnection().url,
       provider: provider1,
       relayer: relayer1,
       isDefaultChain: true
     },
+    // @ts-ignore
     {
       name: 'hardhat2',
       chainId: 31338,
-      rpcUrl: provider2.connection.url,
+      rpcUrl: provider2._getConnection().url,
       provider: provider2,
       relayer: relayer2
     }

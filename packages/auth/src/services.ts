@@ -1,10 +1,10 @@
 import { Account } from '@0xsequence/account'
 import { SequenceAPIClient } from '@0xsequence/api'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
-import { Indexer, SequenceIndexer } from '@0xsequence/indexer'
+import { Indexer, SequenceIndexer, SequenceIndexerGateway } from '@0xsequence/indexer'
 import { SequenceMetadata } from '@0xsequence/metadata'
 import { ChainIdLike, findNetworkConfig } from '@0xsequence/network'
-import { getEthersConnectionInfo } from '@0xsequence/utils'
+import { getFetchRequest } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 
 export type SessionMeta = {
@@ -20,6 +20,7 @@ export type ServicesSettings = {
   sequenceApiUrl: string
   sequenceApiChainId: ethers.BigNumberish
   sequenceMetadataUrl: string
+  sequenceIndexerGatewayUrl: string
 }
 
 export type SessionJWT = {
@@ -56,6 +57,7 @@ export class Services {
   private apiClient: SequenceAPIClient | undefined
   private metadataClient: SequenceMetadata | undefined
   private indexerClients: Map<number, Indexer> = new Map()
+  private indexerGateway: SequenceIndexerGateway | undefined
 
   private projectAccessKey?: string
 
@@ -201,21 +203,21 @@ export class Services {
   private async isProofStringValid(proofString: string): Promise<boolean> {
     try {
       const ethAuth = new ETHAuth()
-      const chainId = ethers.BigNumber.from(this.settings.sequenceApiChainId)
-      const network = findNetworkConfig(this.account.networks, chainId)
-      if (!network) throw Error('No network found')
-      ethAuth.chainId = chainId.toNumber()
+      const chainId = BigInt(this.settings.sequenceApiChainId)
+      const found = findNetworkConfig(this.account.networks, chainId)
+      if (!found) {
+        throw Error('No network found')
+      }
+      ethAuth.chainId = Number(chainId)
+
+      const network = new ethers.Network(found.name, chainId)
 
       // TODO: Modify ETHAuth so it can take a provider instead of a url
       // -----
       // Can't pass jwt here since this is used for getting the jwt
-      ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(
-        getEthersConnectionInfo(network.rpcUrl, this.projectAccessKey),
-        {
-          name: '',
-          chainId: chainId.toNumber()
-        }
-      )
+      ethAuth.provider = new ethers.JsonRpcProvider(getFetchRequest(found.rpcUrl, this.projectAccessKey), network, {
+        staticNetwork: network
+      })
 
       await ethAuth.decodeProof(proofString)
 
@@ -266,6 +268,15 @@ export class Services {
     return this.indexerClients.get(network.chainId)!
   }
 
+  async getIndexerGateway(tryAuth: boolean = true): Promise<SequenceIndexerGateway> {
+    if (!this.indexerGateway) {
+      const jwtAuth = (await this.getJWT(tryAuth)).token
+      this.indexerGateway = new SequenceIndexerGateway(this.settings.sequenceIndexerGatewayUrl, undefined, jwtAuth)
+    }
+
+    return this.indexerGateway
+  }
+
   private getProofString(key: string): ProofStringPromise {
     // check if we already have or are waiting for a proof string
     if (this.proofStrings.has(key)) {
@@ -290,20 +301,21 @@ export class Services {
     proof.setExpiryIn(this.expiration)
 
     const ethAuth = new ETHAuth()
-    const chainId = ethers.BigNumber.from(this.settings.sequenceApiChainId)
-    const network = findNetworkConfig(this.account.networks, chainId)
-    if (!network) throw Error('No network found')
-    ethAuth.chainId = chainId.toNumber()
+    const chainId = BigInt(this.settings.sequenceApiChainId)
+    const found = findNetworkConfig(this.account.networks, chainId)
+    if (!found) {
+      throw Error('No network found')
+    }
+    ethAuth.chainId = Number(chainId)
+
+    const network = new ethers.Network(found.name, chainId)
+
     // TODO: Modify ETHAuth so it can take a provider instead of a url
     // -----
     // Can't pass jwt here since this is used for getting the jwt
-    ethAuth.provider = new ethers.providers.StaticJsonRpcProvider(
-      getEthersConnectionInfo(network.rpcUrl, this.projectAccessKey),
-      {
-        name: '',
-        chainId: chainId.toNumber()
-      }
-    )
+    ethAuth.provider = new ethers.JsonRpcProvider(getFetchRequest(found.rpcUrl, this.projectAccessKey), network, {
+      staticNetwork: network
+    })
 
     const expiration = this.now() + this.expiration - EXPIRATION_JWT_MARGIN
 

@@ -1,4 +1,4 @@
-import { ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 import { proto } from './rpc-relayer'
 
 import { commons } from '@0xsequence/core'
@@ -19,7 +19,7 @@ export interface Relayer {
   // It doesn't make any assumptions about the transaction format.
   getFeeOptionsRaw(
     entrypoint: string,
-    data: ethers.utils.BytesLike,
+    data: ethers.BytesLike,
     options?: {
       simulate?: boolean
     }
@@ -29,10 +29,16 @@ export interface Relayer {
   // relayer for submitting your transaction to a network.
   gasRefundOptions(address: string, ...transactions: commons.transaction.Transaction[]): Promise<FeeOption[]>
 
+  // Gas tank sponsorship management
+  listGasSponsors(args: proto.ListGasSponsorsArgs): Promise<proto.ListGasSponsorsReturn>
+  addGasSponsor(args: proto.AddGasSponsorArgs): Promise<proto.AddGasSponsorReturn>
+  updateGasSponsor(args: proto.UpdateGasSponsorArgs): Promise<proto.UpdateGasSponsorReturn>
+  removeGasSponsor(args: proto.RemoveGasSponsorArgs): Promise<proto.RemoveGasSponsorReturn>
+
   // getNonce returns the transaction count/nonce for a wallet, encoded with nonce space.
   // If space is undefined, the relayer can choose a nonce space to encode the result with.
   // Otherwise, the relayer must return a nonce encoded for the given nonce space.
-  getNonce(address: string, space?: ethers.BigNumberish, blockTag?: providers.BlockTag): Promise<ethers.BigNumberish>
+  getNonce(address: string, space?: ethers.BigNumberish, blockTag?: ethers.BlockTag): Promise<ethers.BigNumberish>
 
   // relayer will submit the transaction(s) to the network and return the transaction response.
   // The quote should be the one returned from getFeeOptions, if any.
@@ -40,7 +46,8 @@ export interface Relayer {
   relay(
     signedTxs: commons.transaction.IntendedTransactionBundle,
     quote?: FeeQuote,
-    waitForReceipt?: boolean
+    waitForReceipt?: boolean,
+    projectAccessKey?: string
   ): Promise<commons.transaction.TransactionResponse>
 
   // wait for transaction confirmation
@@ -53,6 +60,24 @@ export interface Relayer {
     delay?: number,
     maxFails?: number
   ): Promise<commons.transaction.TransactionResponse>
+
+  // getMetaTransactions returns a list of meta transactions for a given project and gas tank
+  getMetaTransactions(
+    projectId: number,
+    page?: proto.Page
+  ): Promise<{
+    page: proto.Page
+    transactions: proto.MetaTxnLog[]
+  }>
+
+  // getTransactionCost returns the used fee cost for gas tank during a given period
+  getTransactionCost(
+    projectId: number,
+    from: string,
+    to: string
+  ): Promise<{
+    cost: number
+  }>
 }
 
 export * from './local-relayer'

@@ -1,4 +1,4 @@
-import { BigNumberish, ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 import { Indexer } from '@0xsequence/indexer'
 import { Relayer, RpcRelayerOptions } from '@0xsequence/relayer'
 import { findNetworkConfig, stringTemplate, validateAndSortNetworks } from './utils'
@@ -7,7 +7,7 @@ import { ChainId, NetworkMetadata, networks } from './constants'
 
 export type NetworkConfig = NetworkMetadata & {
   rpcUrl: string
-  provider?: providers.Provider
+  provider?: ethers.Provider
   indexerUrl?: string
   indexer?: Indexer
   relayer?: Relayer | RpcRelayerOptions
@@ -30,18 +30,18 @@ export function findSupportedNetwork(chainIdOrName: string | ChainIdLike): Netwo
   return findNetworkConfig(allNetworks, chainIdOrName)
 }
 
-export type ChainIdLike = NetworkConfig | BigNumberish
+export type ChainIdLike = NetworkConfig | ethers.BigNumberish
 
-export function toChainIdNumber(chainIdLike: ChainIdLike): ethers.BigNumber {
-  if (ethers.BigNumber.isBigNumber(chainIdLike)) {
+export function toChainIdNumber(chainIdLike: ChainIdLike): bigint {
+  if (typeof chainIdLike === 'bigint') {
     return chainIdLike
   }
 
   if (isBigNumberish(chainIdLike)) {
-    return ethers.BigNumber.from(chainIdLike)
+    return BigInt(chainIdLike)
   }
 
-  return ethers.BigNumber.from(chainIdLike.chainId)
+  return BigInt(chainIdLike.chainId)
 }
 
 const createNetworkConfig = (chainId: ChainId, options?: { disabled?: boolean }): NetworkConfig => {
@@ -115,14 +115,34 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.XAI),
   createNetworkConfig(ChainId.XAI_SEPOLIA),
   createNetworkConfig(ChainId.AVALANCHE_TESTNET),
-  createNetworkConfig(ChainId.ASTAR_ZKEVM),
-  createNetworkConfig(ChainId.ASTAR_ZKYOTO),
+  createNetworkConfig(ChainId.XR1),
   createNetworkConfig(ChainId.XR_SEPOLIA),
+  createNetworkConfig(ChainId.B3),
   createNetworkConfig(ChainId.B3_SEPOLIA),
+  createNetworkConfig(ChainId.APECHAIN),
   createNetworkConfig(ChainId.APECHAIN_TESTNET),
   createNetworkConfig(ChainId.BLAST),
   createNetworkConfig(ChainId.BLAST_SEPOLIA),
   createNetworkConfig(ChainId.TELOS),
-
+  createNetworkConfig(ChainId.TELOS_TESTNET),
+  createNetworkConfig(ChainId.BORNE_TESTNET),
+  createNetworkConfig(ChainId.SKALE_NEBULA),
+  createNetworkConfig(ChainId.SKALE_NEBULA_TESTNET),
+  createNetworkConfig(ChainId.SONEIUM),
+  createNetworkConfig(ChainId.SONEIUM_MINATO),
+  createNetworkConfig(ChainId.TOY_TESTNET),
+  createNetworkConfig(ChainId.IMMUTABLE_ZKEVM),
+  createNetworkConfig(ChainId.IMMUTABLE_ZKEVM_TESTNET),
+  createNetworkConfig(ChainId.ROOT_NETWORK),
+  createNetworkConfig(ChainId.ROOT_NETWORK_PORCINI),
+  createNetworkConfig(ChainId.LAOS),
+  createNetworkConfig(ChainId.LAOS_SIGMA_TESTNET),
+  createNetworkConfig(ChainId.MOONBEAM),
+  createNetworkConfig(ChainId.MOONBASE_ALPHA),
+  createNetworkConfig(ChainId.ETHERLINK),
+  createNetworkConfig(ChainId.ETHERLINK_TESTNET),
+  createNetworkConfig(ChainId.SOMNIA_TESTNET),
+  createNetworkConfig(ChainId.MONAD_TESTNET),
+  createNetworkConfig(ChainId.FREQUENCY_TESTNET),
   ...hardhatNetworks
 ])
