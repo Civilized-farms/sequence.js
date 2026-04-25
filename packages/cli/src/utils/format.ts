@@ -12,6 +12,5 @@ export async function format(content: string) {
     tabWidth: 2,
     trailingComma: 'all',
     ...config,
-    plugins: [],
   })
 }
