@@ -1,7 +1,4 @@
 name: Issue Labeled
-permissions:
-  contents: read
-  issues: read
 
 on:
   issues:

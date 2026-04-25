@@ -3,9 +3,6 @@ on:
   workflow_call:
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   check:
     name: Check
@@ -44,8 +41,6 @@ jobs:
     name: Build
     needs: check
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     timeout-minutes: 5
 
     steps:
@@ -68,8 +63,6 @@ jobs:
     name: Types
     needs: check
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     timeout-minutes: 5
     strategy:
       matrix:
@@ -99,8 +92,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     timeout-minutes: 10
     strategy:
       max-parallel: 3
